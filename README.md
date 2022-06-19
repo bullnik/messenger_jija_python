@@ -89,6 +89,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
 Вебсокет - нужен для оперативного отображения сообщений без необходимости постоянно обновлять страницу. Подписываемся на очередь сообщений пользователей, которая у нас в redis
 ![image](https://user-images.githubusercontent.com/63580342/174493912-67aae6b4-1ef9-4ebe-b327-dd3980ffe30d.png)
+[image](https://user-images.githubusercontent.com/63580342/174494170-bf1699ce-628b-429f-bd9b-d61f147c5867.png)
+
 
 ```
 async def consumer_handler(websocket: WebSocketClientProtocol) -> None:
