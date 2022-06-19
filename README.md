@@ -1,6 +1,56 @@
 Взят за основу fastapi - rest api фреймворк
 ![image](https://user-images.githubusercontent.com/63580342/174488383-2561527f-2a4c-426f-908f-76e30ae9c1ce.png)
 
+Alembic — это инструмент для миграции базы данных, используемый в SQLAlchemy (библиотека для работы с реляционными СУБД с применением технологии ORM (типа виртуальная объектная БД))
+![image](https://user-images.githubusercontent.com/63580342/174490873-587b2990-19e6-481f-b307-232f279612af.png)
+- Миграции alembic:
+
+```
+from logging.config import fileConfig
+
+from sqlalchemy import engine_from_config
+from sqlalchemy import pool
+
+from alembic import context
+
+from core.db.models import Base
+from core.db.session import db_url, engine
+
+config = context.config
+
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
+
+target_metadata = Base.metadata
+
+
+def run_migrations_offline():
+    context.configure(
+        url=db_url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+def run_migrations_online():
+    with engine.connect() as connection:
+        context.configure(
+            connection=connection, target_metadata=target_metadata
+        )
+        with context.begin_transaction():
+            context.run_migrations()
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()
+```
+
+
 В качестве брокера сообщений у нас используется redis
 
 ```
@@ -37,7 +87,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     return user_id
 ```
 
-Вебсокет - нужен для оперативного отображения сообщений без необходимости постоянно обновлять страницу. Подписываемся на очередь сообщений пользователей
+Вебсокет - нужен для оперативного отображения сообщений без необходимости постоянно обновлять страницу. Подписываемся на очередь сообщений пользователей, которая у нас в redis
+![image](https://user-images.githubusercontent.com/63580342/174493912-67aae6b4-1ef9-4ebe-b327-dd3980ffe30d.png)
 
 ```
 async def consumer_handler(websocket: WebSocketClientProtocol) -> None:
@@ -179,56 +230,10 @@ class Message(Base):
     chat_id = Column(Integer, ForeignKey('chats.id', ondelete="CASCADE"))
 ```
 
-Alembic — это инструмент для миграции базы данных, используемый в SQLAlchemy (библиотека для работы с реляционными СУБД с применением технологии ORM (типа виртуальная объектная БД))
-![image](https://user-images.githubusercontent.com/63580342/174490873-587b2990-19e6-481f-b307-232f279612af.png)
-- Миграции alembic:
-
-```
-from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
-from alembic import context
-
-from core.db.models import Base
-from core.db.session import db_url, engine
-
-config = context.config
-
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
-
-target_metadata = Base.metadata
-
-
-def run_migrations_offline():
-    context.configure(
-        url=db_url,
-        target_metadata=target_metadata,
-        literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
-    )
-
-    with context.begin_transaction():
-        context.run_migrations()
-
-
-def run_migrations_online():
-    with engine.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
-        with context.begin_transaction():
-            context.run_migrations()
-
-if context.is_offline_mode():
-    run_migrations_offline()
-else:
-    run_migrations_online()
-```
 
 Celery - ассинхронная очередь заданий
+![image](https://user-images.githubusercontent.com/63580342/174494095-ff59c454-c3bf-47c2-8d24-a3a4bf3ea6d1.png)
+
 - Запуск celery:
 
 ```
@@ -245,4 +250,20 @@ def send_celery_task(begin_datetime: datetime):
     dt_with_timezone = timezone.localize(begin_datetime)
 
     celery.send_task("queue.test", eta=dt_with_timezone)
+```
+- Воркер и конфигурация
+
+```
+celery_app = Celery("worker") 
+celery_app.config_from_object("core.broker.celeryconfig")
+```
+```
+broker_url = getenv("AMQP_URI")
+task_ignore_result = True
+task_store_errors_even_if_ignored = True
+worker_concurrency = int(getenv("WORKER_CONCURRENCY", "4"))
+
+task_routes = {
+    "queue.*": "queue",
+}
 ```
