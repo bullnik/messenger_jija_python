@@ -1,5 +1,104 @@
-Взят за основу fastapi - rest api фреймворк
+Взят за основу fastapi - расширение фрейморка Starlette, позволяющее удобно делать REST API сервисы, поддерживающее JWT, OAuth2 для удбной авторизации и прочее. 
 ![image](https://user-images.githubusercontent.com/63580342/174488383-2561527f-2a4c-426f-908f-76e30ae9c1ce.png)
+
+За приведение данных к определённому виду и соответствию определённому набору правил и ограничений, то есть за валидацию, отвечает Pydantic:
+![image](https://user-images.githubusercontent.com/63580342/174495866-9515cd22-e1ed-41d4-b392-be10d70271dc.png)
+
+```
+from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel
+
+from schemas.chat_type import ChatType
+
+
+class ChatModel(BaseModel):
+    creator_user_id: int
+    title: str
+    description: Optional[str] = None
+    chat_type: ChatType
+
+
+class Chat(ChatModel):
+    id: int
+    created: datetime
+    updated: datetime
+    users: list
+
+    class Config:
+        orm_mode = True
+```
+
+```
+class ChatResponse(BaseModel):
+    chat: Chat
+    messages: list[Message]
+    members: list[User]
+```
+
+```
+class MessageModel(BaseModel):
+    user_id: int
+    chat_id: int
+    text: str
+
+
+class Message(MessageModel):
+    id: int
+    created: datetime
+    updated: datetime
+
+    class Config:
+        orm_mode = True
+```
+
+```
+class UserModel(BaseModel):
+    login: str
+    password: str
+    name: str
+
+
+class User(UserModel):
+    id: int
+    status: UserStatus
+    updated: datetime = None
+    created: datetime
+    chats: list
+
+    class Config:
+        orm_mode = True
+```
+
+```
+```
+
+```
+from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel
+
+from schemas.chat_type import ChatType
+
+
+class ChatModel(BaseModel):
+    creator_user_id: int
+    title: str
+    description: Optional[str] = None
+    chat_type: ChatType
+
+
+class Chat(ChatModel):
+    id: int
+    created: datetime
+    updated: datetime
+    users: list
+
+    class Config:
+        orm_mode = True
+```
 
 Alembic — это инструмент для миграции базы данных, используемый в SQLAlchemy (библиотека для работы с реляционными СУБД с применением технологии ORM (типа виртуальная объектная БД))
 ![image](https://user-images.githubusercontent.com/63580342/174490873-587b2990-19e6-481f-b307-232f279612af.png)
@@ -64,7 +163,6 @@ redis = aioredis.from_url(f"redis://redis:{getenv('REDIS_PORT', 6379)}")
 
 JSON Web Tokens (JWT) - создаём токены, которые будем использовать при авторизации пользователей
 ![image](https://user-images.githubusercontent.com/63580342/174494220-4c578b85-f313-4a97-83eb-85e1be4e2125.png)
-![image](https://user-images.githubusercontent.com/63580342/174494232-2a913786-3eb3-4a5c-8720-94924f43eca8.png)
 
 
 ```
@@ -155,83 +253,6 @@ class MessageRepository(Crud):
     def get_last_messages(self, chat_id: int, db: Session, offset: int = 0, limit: int = 20):
         messages = db.query(Message) .filter_by(chat_id=chat_id).order_by(desc(Message.created)).offset(offset).limit(limit).all()
         return messages
-```
-
-- Модели:
-
-```
-class ChatModel(BaseModel):
-    creator_user_id: int
-    title: str
-    description: Optional[str] = None
-    chat_type: ChatType
-
-
-class Chat(ChatModel):
-    id: int
-    created: datetime
-    updated: datetime
-    users: list
-
-    class Config:
-        orm_mode = True
-```
-
-```
-class MessageModel(BaseModel):
-    user_id: int
-    chat_id: int
-    text: str
-
-
-class Message(MessageModel):
-    id: int
-    created: datetime
-    updated: datetime
-
-    class Config:
-        orm_mode = True
-
-Base = declarative_base()
-
-
-chat_user = Table('chat_user', Base.metadata,
-                  Column('user_id', Integer, ForeignKey('users.id', ondelete="CASCADE"), nullable=False),
-                  Column('chat_id', Integer, ForeignKey('chats.id', ondelete="CASCADE"), nullable=False))
-
-
-class User(Base):
-    __tablename__ = 'users'
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(256))
-    login = Column(String(256), unique=True, nullable=False)
-    password = Column(String(256))
-    status = Column(Enum(UserStatus), default=UserStatus.active)
-    created = Column(DateTime(), server_default=func.now())
-    updated = Column(DateTime(), server_default=func.now(), onupdate=func.now())
-    chats = relationship('Chat', secondary=chat_user, back_populates='users')
-
-
-class Chat(Base):
-    __tablename__ = 'chats'
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(256), nullable=False)
-    description = Column(String(512))
-    chat_type = Column(Enum(ChatType), nullable=False)
-    creator_user_id = Column(Integer, nullable=False)
-    created = Column(DateTime(), server_default=func.now())
-    updated = Column(DateTime(), server_default=func.now(), onupdate=func.now())
-    users = relationship('User', secondary=chat_user, back_populates='chats')
-
-
-class Message(Base):
-    __tablename__ = 'messages'
-    id = Column(Integer, primary_key=True, index=True)
-    text = Column(String(1024), nullable=False)
-    created = Column(DateTime(), server_default=func.now())
-    updated = Column(DateTime(), server_default=func.now(), onupdate=func.now())
-    user_id = Column(Integer, ForeignKey('users.id'))
-    chat_id = Column(Integer, ForeignKey('chats.id', ondelete="CASCADE"))
 ```
 
 
