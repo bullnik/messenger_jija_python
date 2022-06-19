@@ -2,7 +2,7 @@
 ![image](https://user-images.githubusercontent.com/63580342/174488383-2561527f-2a4c-426f-908f-76e30ae9c1ce.png)
 
 За приведение данных к определённому виду и соответствию определённому набору правил и ограничений, то есть за валидацию, отвечает Pydantic:
-![image](https://user-images.githubusercontent.com/63580342/174495932-2eeacf89-ff8a-4b11-8086-dc450338aaf9.png)
+![image](https://user-images.githubusercontent.com/63580342/174496116-5fa1bfce-c471-49de-bc50-03f26a50c080.png)
 
 ```
 from datetime import datetime
