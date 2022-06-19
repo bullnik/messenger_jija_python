@@ -2,7 +2,7 @@
 ![image](https://user-images.githubusercontent.com/63580342/174488383-2561527f-2a4c-426f-908f-76e30ae9c1ce.png)
 
 За приведение данных к определённому виду и соответствию определённому набору правил и ограничений, то есть за валидацию, отвечает Pydantic:
-![image](https://user-images.githubusercontent.com/63580342/174495866-9515cd22-e1ed-41d4-b392-be10d70271dc.png)
+![image](https://user-images.githubusercontent.com/63580342/174495932-2eeacf89-ff8a-4b11-8086-dc450338aaf9.png)
 
 ```
 from datetime import datetime
@@ -66,35 +66,6 @@ class User(UserModel):
     updated: datetime = None
     created: datetime
     chats: list
-
-    class Config:
-        orm_mode = True
-```
-
-```
-```
-
-```
-from datetime import datetime
-from typing import Optional
-
-from pydantic import BaseModel
-
-from schemas.chat_type import ChatType
-
-
-class ChatModel(BaseModel):
-    creator_user_id: int
-    title: str
-    description: Optional[str] = None
-    chat_type: ChatType
-
-
-class Chat(ChatModel):
-    id: int
-    created: datetime
-    updated: datetime
-    users: list
 
     class Config:
         orm_mode = True
