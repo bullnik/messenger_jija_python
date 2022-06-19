@@ -63,6 +63,9 @@ redis = aioredis.from_url(f"redis://redis:{getenv('REDIS_PORT', 6379)}")
 ```
 
 JSON Web Tokens (JWT) - создаём токены, которые будем использовать при авторизации пользователей
+![image](https://user-images.githubusercontent.com/63580342/174494220-4c578b85-f313-4a97-83eb-85e1be4e2125.png)
+![image](https://user-images.githubusercontent.com/63580342/174494232-2a913786-3eb3-4a5c-8720-94924f43eca8.png)
+
 
 ```
 def get_user_from_jwt(token: str):
